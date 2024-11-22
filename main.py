@@ -10,8 +10,7 @@ import time
 ############################################################################
 
 # Path to directory containing dicom files
-path_train = '/Users/omar/Downloads/second-annual-data-science-bowl/train'
-path_test = '/Users/omar/Downloads/second-annual-data-science-bowl/test'
+# Expected format of these files: csv files where each line is path_to_dicom, label
 labels_train = 'train.txt'
 labels_test = 'test.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
@@ -32,8 +31,8 @@ encoder_complexity = 0
 
 # Produces DataLoader from our data
 # This Custom Data Loader first handles conversion of .dicom to tensor objects
-train_dataloader = DataLoader(CustomImageDataset(path_train, labels_train, interp_resolution), batch_size=batch_num)
-test_dataloader = DataLoader(CustomImageDataset(path_test, labels_test, interp_resolution), batch_size=batch_num)
+train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution), batch_size=batch_num)
+test_dataloader = DataLoader(CustomImageDataset(labels_test, interp_resolution), batch_size=batch_num)
 
 # This tests the MRI Data Loader
 '''

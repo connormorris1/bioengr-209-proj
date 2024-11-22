@@ -6,8 +6,7 @@ from dicom_to_tensor import dicom_path_to_tensor
 class CustomImageDataset(Dataset):
     # annotations_file is a path to a csv file with the DICOM folder name, label
     # img_dir is path to folder containing all image folders, each with a collection of dicom images
-    def __init__(self, img_dir, annotations_file, interp_resolution, transform=None, target_transform=None):
-        self.img_dir = img_dir
+    def __init__(self, annotations_file, interp_resolution, transform=None, target_transform=None):
         self.img_labels = pd.read_csv(annotations_file)
         self.transform = transform
         self.target_transform = target_transform
