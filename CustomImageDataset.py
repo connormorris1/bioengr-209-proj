@@ -29,6 +29,6 @@ class CustomImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
-            label = self.target_transform(label)
+            label = self.target_transform(label) #***I don't think we need this, since there is no "target image", just a binary classification***
         return image, label
 

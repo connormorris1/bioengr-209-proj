@@ -19,9 +19,11 @@ def dicom_path_to_tensor(img_path, interp_resolution):
 
     # Turn from a 1 color channel image into 3 channel
     # TODO Make this better since model expects 3 color channel so I'm just copying the intensity into two other channels
+    # ***Medical images are grayscale. Maybe an architecture w/out extra color channels is better?***
     dicom_tensor_resized = np.repeat(dicom_tensor_resized, 3, axis=0)
 
     # Model expects a float instead of int
+    # ***may need to normalize pixel values to mean of 0, std of 1***
     dicom_tensor_resized = dicom_tensor_resized.to(torch.float32)
 
     return dicom_tensor_resized

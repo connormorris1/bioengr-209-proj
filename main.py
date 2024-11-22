@@ -68,9 +68,9 @@ if encoder_complexity == 1:
 if encoder_complexity == 2:
     model = models.resnet50(pretrained=pretrained)
 
-# Modify the final fully connected layer for 2 classes (single ventricle or not)
+# Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
 num_classes = 2
-model.fc = nn.Linear(model.fc.in_features, num_classes)
+model.fc = nn.Linear(model.fc.in_features, num_classes) #***this model isn't built properly***
 
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
 resnet18 = model.to(device)
@@ -86,7 +86,7 @@ start_time = time.time()
 for i in range(0, num_epochs):
     epoch_start_time = time.time()
 
-    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer)
+    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer) #***will want to structure our training loop to see equal numbers of SVP and normal examples each epoch (oversample SVP cases)***
     test_loop(test_dataloader, model, criterion, device)
 
     elapsed_time = time.time() - epoch_start_time
