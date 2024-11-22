@@ -10,7 +10,7 @@ import csv
 path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train'
 #path = '/Users/omar/Downloads/second-annual-data-science-bowl/test/test'
 label = 0
-number_to_keep = 5000
+number_to_keep = None
 csv_name = 'train.txt'
 
 ############################################################################

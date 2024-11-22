@@ -68,14 +68,13 @@ if encoder_complexity == 2:
     model = models.resnet50(pretrained=pretrained)
 
 # Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
-num_classes = 2
+num_classes = 1
 model.fc = nn.Linear(model.fc.in_features, num_classes) #***this model isn't built properly***
-
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
 resnet18 = model.to(device)
 
 # Loss and optimizer
-criterion = nn.CrossEntropyLoss()
+criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 # Timer
