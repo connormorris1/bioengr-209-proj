@@ -1,7 +1,7 @@
 #import os
 import pydicom
 import torch
-from torchvision.transforms import Resize
+from skimage.transform import rescale
 import numpy as np
 
 # Takes a path to a 2D dicom file and converts it to a tensor (with dimensions interp_resolution x interp_resolution)
@@ -11,11 +11,39 @@ def dicom_path_to_tensor(img_path, interp_resolution):
 
     # Load image dicom and conver to tensor
     dicom = pydicom.dcmread(img_path)
-    dicom_tensor = torch.tensor(dicom.pixel_array)
+    array = dicom.pixel_array
 
+    #rescale to 1mmx1mm pixel size
+    array = rescale(array, dicom.PixelSpacing,anti_aliasing=dicom.PixelSpacing[0] < 1)
+    #center crop to 224x224, with 0 padding if less
+    target_dim = 224
+    if array.shape[0] > target_dim:
+        center_point = array.shape[0]//2
+        array = array[center_point - 112:center_point + 112,:]
+    elif array.shape[0] < target_dim:
+        if array.shape[1] % 2 == 0:
+            correction_factor = 0
+        else:
+            correction_factor = 1
+        pad_size = (target_dim - array.shape[0])//2
+        array = np.pad(array,((pad_size + correction_factor,pad_size),(0,0)),constant_values=0)
+    if array.shape[1] > target_dim:
+        center_point = array.shape[1]//2
+        array = array[:,center_point - 112:center_point + 112]
+    elif array.shape[1] < target_dim:
+        if array.shape[1] % 2 == 0:
+            correction_factor = 0
+        else:
+            correction_factor = 1
+        pad_size = (target_dim - array.shape[1])//2
+        array = np.pad(array,((0,0),(pad_size + correction_factor,pad_size)),constant_values=0)
+    
+    mean = np.mean(array)
+    std = np.std(array)
+    normalized_array = (array - mean)/std
+    dicom_tensor = torch.from_numpy(normalized_array)
     # Add an extra dimension for color channel because it is required for interpolation
     dicom_tensor = dicom_tensor.unsqueeze(0)
-    dicom_tensor_resized = Resize(size=(interp_resolution, interp_resolution))(dicom_tensor)
 
     # Turn from a 1 color channel image into 3 channel
     # TODO Make this better since model expects 3 color channel so I'm just copying the intensity into two other channels
