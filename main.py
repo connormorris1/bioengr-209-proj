@@ -31,8 +31,9 @@ encoder_complexity = 0
 
 # Produces DataLoader from our data
 # This Custom Data Loader first handles conversion of .dicom to tensor objects
-train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution), batch_size=batch_num)
-test_dataloader = DataLoader(CustomImageDataset(labels_test, interp_resolution), batch_size=batch_num)
+# Balance training data (so positive and negative labels equal) but don't do so for test data
+train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, True), batch_size=batch_num)
+test_dataloader = DataLoader(CustomImageDataset(labels_test, interp_resolution, False), batch_size=batch_num)
 
 # This tests the MRI Data Loader
 '''

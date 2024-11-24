@@ -1,13 +1,21 @@
 import pandas as pd
 from torch.utils.data import Dataset
 from dicom_to_tensor import dicom_path_to_tensor
+from balance_labels import balance_labels
 
 # Based on tutorial from PyTorch website https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
 class CustomImageDataset(Dataset):
     # annotations_file is a path to a csv file with the DICOM folder name, label
     # img_dir is path to folder containing all image folders, each with a collection of dicom images
-    def __init__(self, annotations_file, interp_resolution, transform=None, target_transform=None):
-        self.img_labels = pd.read_csv(annotations_file)
+    # set balance to True if you want to balance the positive and negative labels
+    def __init__(self, annotations_file, interp_resolution, balance=False, transform=None, target_transform=None):
+
+        # Note here we need to balance the positive and negative labels if train data
+        if balance:
+            self.img_labels = balance_labels(pd.read_csv(annotations_file, header=None))
+        else:
+            self.img_labels = pd.read_csv(annotations_file, header=None)
+
         self.transform = transform
         self.target_transform = target_transform
 
