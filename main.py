@@ -11,8 +11,8 @@ import time
 
 # Path to directory containing dicom files
 # Expected format of these files: csv files where each line is path_to_dicom, label
-labels_train = 'train.txt'
-labels_test = 'test.txt'
+labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
+labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
 interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size

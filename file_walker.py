@@ -7,11 +7,12 @@ import csv
 # If number to keep is not None then it will randomly select that number of .dicom files (use case is
 # to trim the amount of training data to avoid too many of one kind of label)
 # TODO Potential problem with this is it's not guaranteed to include all patients
-path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train'
+path = '/data/chd/kaggle/validate/validate'
+# path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train'
 #path = '/Users/omar/Downloads/second-annual-data-science-bowl/test/test'
 label = 0
-number_to_keep = 50
-csv_name = 'train.txt'
+number_to_keep = None 
+csv_name = 'kaggle_validate.txt'
 
 ############################################################################
 
@@ -35,7 +36,7 @@ for root, dirs, files in os.walk(path):
 if number_to_keep is not None:
     matching_files = random.sample(matching_files, number_to_keep)
 
-print(matching_files)
+# print(matching_files)
 print(len(matching_files))
 
 # Now save as csv
@@ -45,11 +46,11 @@ for i in range(0, len(matching_files)):
     row = []
     row.append((matching_files[i]))
     #row.append(random.choice([0, 1]))
-    if random.random() < 0.1:
-        row.append(1)
-    else:
-        row.append(0)
-    #row.append(label)
+    # if random.random() < 0.1:
+    #     row.append(1)
+    # else:
+    #     row.append(0)
+    row.append(label)
     rows.append(row)
 with open(csv_name, 'w') as csvfile:
     writer = csv.writer(csvfile)
