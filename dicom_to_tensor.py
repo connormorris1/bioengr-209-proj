@@ -21,7 +21,7 @@ def dicom_path_to_tensor(img_path, interp_resolution):
         center_point = array.shape[0]//2
         array = array[center_point - 112:center_point + 112,:]
     elif array.shape[0] < target_dim:
-        if array.shape[1] % 2 == 0:
+        if array.shape[0] % 2 == 0:
             correction_factor = 0
         else:
             correction_factor = 1
@@ -53,6 +53,10 @@ def dicom_path_to_tensor(img_path, interp_resolution):
     # Model expects a float instead of int
     # ***may need to normalize pixel values to mean of 0, std of 1***
     dicom_tensor_resized = dicom_tensor_resized.to(torch.float32)
+    shape = dicom_tensor_resized.shape
+    if shape[0] != 3 or shape[1] != 224 or shape[2] != 224:
+        print(f"Improper shape {shape}")
+        print(img_path)
 
     return dicom_tensor_resized
 
