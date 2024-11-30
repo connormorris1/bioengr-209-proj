@@ -8,6 +8,7 @@ from train_and_test_loop import train_loop, test_loop
 import numpy as np
 import pandas as pd
 import time
+import wandb
 
 ############################################################################
 
@@ -20,6 +21,7 @@ interp_resolution = 224 # Resnets expect a 224x224 image
 batch_num = 100 # Batch size
 learning_rate = 0.001
 num_epochs = 3
+save_model_path = 'resnet_weights.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
 
@@ -86,6 +88,18 @@ model = model.to(device)
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+wandb.login(key="3ecaafdc4daf42051628a9bdebf0debb6eb8a1c5")
+run = wandb.init(project='bioengr-209-project',
+                 config={
+                     "model": model,
+                     "save_model_path": save_model_path,
+                     "epochs": num_epochs,
+                     "batch_size": batch_num,
+                     "input_dim": interp_resolution,
+                     "model_complexity": encoder_complexity
+                 },
+                 name='test_run'
+                 )
 # Timer
 start_time = time.time()
 
@@ -93,7 +107,7 @@ start_time = time.time()
 for i in range(0, num_epochs):
     epoch_start_time = time.time()
 
-    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer) #***will want to structure our training loop to see equal numbers of SVP and normal examples each epoch (oversample SVP cases)***
+    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer) 
     test_loop(test_dataloader, model, criterion, device)
 
     elapsed_time = time.time() - epoch_start_time
@@ -104,4 +118,4 @@ print('Total time: ' + str(elapsed_time) + ' seconds')
 
 # Save our model
 # See this tutorial for how to load our model: https://pytorch.org/tutorials/beginner/basics/saveloadrun_tutorial.html
-torch.save(model.state_dict(), 'resnet_weights.pth')
+torch.save(model.state_dict(), save_model_path)
