@@ -34,7 +34,7 @@ def test_loop(dataloader, model, loss_fn, device):
     model.eval()
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
-    test_loss, correct = 0, 0
+    test_loss = 0
     true_pos, true_neg, false_pos, false_neg = 0,0,0,0
 
     # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
@@ -48,9 +48,21 @@ def test_loop(dataloader, model, loss_fn, device):
 
             pred = model(X)
             test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            pos_label = torch.where(y==1)[0]
+            neg_label = torch.where(y==0)[0]
+            pos_pred = torch.where(pred >= 0.5)[0]
+            neg_pred = torch.where(pred < 0.5)[0]
+            true_pos += torch.sum(torch.isin(pos_pred,pos_label)).item()
+            true_neg += torch.sum(torch.isin(neg_pred,neg_label)).item()
+            false_pos += torch.sum(torch.isin(pos_pred,neg_label)).item()
+            false_neg += torch.sum(torch.isin(neg_pred,pos_label)).item()
 
 
     test_loss /= num_batches
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n") #add in sensitivity, specificity, precision, or patient-level evaluation (vs slice-level)
+    recall = true_pos/(true_pos + false_neg)
+    precision = true_pos/(true_pos + false_pos)
+    accuracy = (true_pos + true_neg)/(true_pos + true_neg + false_pos + false_neg)
+    specificity = true_neg / (true_neg + false_pos)
+    if true_pos + true_neg + false_pos + false_neg != size:
+        print('Mismatch in # of examples used in evaluating model test performance.')
+    print(f"Test Error: \n   Accuracy: {accuracy:>0.3f}\n   recall: {recall:>0.3f}\n   specificity: {specificity:>0.3f}\n   precision: {precision:>0.3f}\n   Avg loss: {test_loss:>8f} \n") 
