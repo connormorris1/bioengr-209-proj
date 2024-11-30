@@ -50,7 +50,7 @@ print(f"Label: {label}")
 # Uses GPU or Mac backend if available, otherwise use CPU
 # This code obtained from official pytorch docs
 device = (
-    "cuda"
+    "cuda:0"
     if torch.cuda.is_available()
     else "mps"
     if torch.backends.mps.is_available()
@@ -70,9 +70,9 @@ if encoder_complexity == 2:
 
 # Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
 num_classes = 1
-model.fc = nn.Linear(model.fc.in_features, num_classes) #***this model isn't built properly***
+model.fc = nn.Linear(model.fc.in_features, num_classes,bias=True) #***this model isn't built properly***
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
-resnet18 = model.to(device)
+model = model.to(device)
 
 # Loss and optimizer
 criterion = nn.BCEWithLogitsLoss()
