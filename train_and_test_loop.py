@@ -40,7 +40,7 @@ def test_loop(dataloader, model, loss_fn, device):
     # Evaluating the model with torch.no_grad() ensures that no gradients are computed during test mode
     # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
     with torch.no_grad():
-        for X, y in dataloader:
+        for batchnum,(X, y) in enumerate(dataloader):
 
             # First move X and y to GPU
             X = X.to(device)
@@ -56,6 +56,19 @@ def test_loop(dataloader, model, loss_fn, device):
             true_neg += torch.sum(torch.isin(neg_pred,neg_label)).item()
             false_pos += torch.sum(torch.isin(pos_pred,neg_label)).item()
             false_neg += torch.sum(torch.isin(neg_pred,pos_label)).item()
+            if batchnum % 25 == 0 and batchnum != 0:
+                print(batchnum)
+                curr_loss = test_loss / (batchnum+1)
+                try:
+                    curr_recall = true_pos/(true_pos + false_neg)
+                    curr_precision = true_pos/(true_pos + false_pos)
+                    curr_accuracy = (true_pos + true_neg)/(true_pos + true_neg + false_pos + false_neg)
+                    curr_specificity = true_neg / (true_neg + false_pos)
+                except:
+                    print(true_pos, true_neg, false_pos, false_neg)
+                    print((batchnum + 1)*len(X))
+                    continue
+                print(f"Test Error: \n   Accuracy: {curr_accuracy:>0.3f}\n   recall: {curr_recall:>0.3f}\n   specificity: {curr_specificity:>0.3f}\n   precision: {curr_precision:>0.3f}\n   Avg loss: {curr_loss:>8f} \n") 
 
 
     test_loss /= num_batches

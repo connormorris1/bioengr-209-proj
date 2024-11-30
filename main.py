@@ -3,8 +3,10 @@ import torch.nn as nn
 from torchvision import models
 from CustomImageDataset import CustomImageDataset
 import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from train_and_test_loop import train_loop, test_loop
+import numpy as np
+import pandas as pd
 import time
 
 ############################################################################
@@ -32,7 +34,13 @@ encoder_complexity = 0
 # Produces DataLoader from our data
 # This Custom Data Loader first handles conversion of .dicom to tensor objects
 # Balance training data (so positive and negative labels equal) but don't do so for test data
-train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, True), batch_size=batch_num)
+#try using WeightedRandomSampler to simplify balancing dataset
+labels = list(pd.read_csv(labels_train,header=None)[1])
+class_counts = np.bincount(labels)
+weights = 1/class_counts
+sample_weights = weights[labels]
+sampler = WeightedRandomSampler(weights=sample_weights,num_samples=int(class_counts[1]*2),replacement=False) #weighted random sampler that chooses a random sample of 2x the # of positive examples each epoch w/out replacement
+train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, False), batch_size=batch_num,sampler=sampler)
 test_dataloader = DataLoader(CustomImageDataset(labels_test, interp_resolution, False), batch_size=batch_num)
 
 # This tests the MRI Data Loader
@@ -50,7 +58,7 @@ print(f"Label: {label}")
 # Uses GPU or Mac backend if available, otherwise use CPU
 # This code obtained from official pytorch docs
 device = (
-    "cuda:0"
+    "cuda:1"
     if torch.cuda.is_available()
     else "mps"
     if torch.backends.mps.is_available()
