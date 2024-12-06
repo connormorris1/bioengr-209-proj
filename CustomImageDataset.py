@@ -9,11 +9,13 @@ class CustomImageDataset(Dataset):
     # annotations_file is a path to a csv file with the DICOM folder name, label
     # img_dir is path to folder containing all image folders, each with a collection of dicom images
     # set balance to True if you want to balance the positive and negative labels
-    def __init__(self, annotations_file, interp_resolution, balance=False, transform=None, target_transform=None):
+    def __init__(self, annotations_file, interp_resolution, balance=False, transform=None, target_transform=None,file_is_df=False):
 
         # Note here we need to balance the positive and negative labels if train data
         if balance:
             self.img_labels = balance_labels(pd.read_csv(annotations_file, header=None))
+        elif file_is_df:
+            self.img_labels = annotations_file
         else:
             self.img_labels = pd.read_csv(annotations_file, header=None)
 

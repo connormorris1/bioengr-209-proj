@@ -69,7 +69,6 @@ def test_loop(dataloader, model, loss_fn, device):
             all_pred.extend(pred_np)
             all_y.extend(y_np)
 
-
     test_loss /= num_batches
     auc = roc_auc_score(all_y,all_pred)
     recall = true_pos/(true_pos + false_neg)

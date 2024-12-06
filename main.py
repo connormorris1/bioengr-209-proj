@@ -20,8 +20,8 @@ interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size
 learning_rate = 0.001
-num_epochs = 3
-save_model_path = 'resnet_weights.pth'
+num_epochs = 50 
+save_model_path = 'resnet_weights_longrun2.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
 
@@ -29,7 +29,7 @@ pretrained = False # Set this to True if you want to use the pretrained version
 # Set this to 0 for Resnet18, 1 for Resnet34, and 2 for Resnet50
 # The higher the complexity, the longer the training time but the better the performance on complex tasks
 # Suggestion: Use Resnet18 to prototype and Resnet 34 or 50 for final model
-encoder_complexity = 0
+encoder_complexity = 1
 
 ############################################################################
 
@@ -60,7 +60,7 @@ print(f"Label: {label}")
 # Uses GPU or Mac backend if available, otherwise use CPU
 # This code obtained from official pytorch docs
 device = (
-    "cuda:1"
+    "cuda:2"
     if torch.cuda.is_available()
     else "mps"
     if torch.backends.mps.is_available()
@@ -98,7 +98,7 @@ run = wandb.init(project='bioengr-209-project',
                      "input_dim": interp_resolution,
                      "model_complexity": encoder_complexity
                  },
-                 name='test_run'
+                 name='test_run_complex1_2'
                  )
 # Timer
 start_time = time.time()
