@@ -28,9 +28,14 @@ class Backbone(nn.Module):
     def forward(self, x):
         return self.backbone(x)
 
-def initialize_radimagenet_resnet(file_path, num_classes):
+def initialize_radimagenet_resnet(file_path, num_classes, freeze_encoder):
     backbone = Backbone()
     classifier = Classifier(num_class=num_classes)
     model = nn.Sequential(backbone, classifier)
     backbone.load_state_dict(torch.load(file_path))
+
+    if freeze_encoder:
+        for parameter in backbone.parameters():
+            parameter.requires_grad = False
+
     return model

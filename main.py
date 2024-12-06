@@ -15,10 +15,10 @@ from FoundationModel import initialize_radimagenet_resnet
 
 # Path to directory containing dicom files
 # Expected format of these files: csv files where each line is path_to_dicom, label
-labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
-labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
-#labels_train = 'train.txt'
-#labels_test = 'test.txt'
+#labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
+#labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
+labels_train = 'train.txt'
+labels_test = 'test.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size
@@ -29,6 +29,7 @@ save_model_path = 'resnet_weights.pth'
 pretrained = False # Set this to True if you want to use the pretrained version
 
 foundation = True # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
+freeze_encoder_foundation = True # Set this to True if you want to freeze the encoder of the foundation model
 
 # There are three different encoder models: Resnet18, Resnet34, and Resnet50
 # Set this to 0 for Resnet18, 1 for Resnet34, and 2 for Resnet50
@@ -91,7 +92,7 @@ num_classes = 1
 model.fc = nn.Linear(model.fc.in_features, num_classes,bias=True) #***this model isn't built properly***
 
 if foundation == True:
-    model = initialize_radimagenet_resnet('RadImageNet_ResNet50.pt', 1)
+    model = initialize_radimagenet_resnet('RadImageNet_ResNet50.pt', 1, freeze_encoder_foundation)
 
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
 model = model.to(device)
