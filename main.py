@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import time
 import wandb
+from FoundationModel import initialize_radimagenet_resnet
 
 ############################################################################
 
@@ -16,6 +17,8 @@ import wandb
 # Expected format of these files: csv files where each line is path_to_dicom, label
 labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
 labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
+#labels_train = 'train.txt'
+#labels_test = 'test.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size
@@ -24,6 +27,8 @@ num_epochs = 3
 save_model_path = 'resnet_weights.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
+
+foundation = True # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
 
 # There are three different encoder models: Resnet18, Resnet34, and Resnet50
 # Set this to 0 for Resnet18, 1 for Resnet34, and 2 for Resnet50
@@ -38,11 +43,14 @@ encoder_complexity = 0
 # Balance training data (so positive and negative labels equal) but don't do so for test data
 #try using WeightedRandomSampler to simplify balancing dataset
 labels = list(pd.read_csv(labels_train,header=None)[1])
+'''
 class_counts = np.bincount(labels)
 weights = 1/class_counts
 sample_weights = weights[labels]
 sampler = WeightedRandomSampler(weights=sample_weights,num_samples=int(class_counts[1]*2),replacement=False) #weighted random sampler that chooses a random sample of 2x the # of positive examples each epoch w/out replacement
-train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, False), batch_size=batch_num,sampler=sampler)
+#train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, False), batch_size=batch_num,sampler=sampler)
+'''
+train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, True), batch_size=batch_num)
 test_dataloader = DataLoader(CustomImageDataset(labels_test, interp_resolution, False), batch_size=batch_num)
 
 # This tests the MRI Data Loader
@@ -81,6 +89,10 @@ if encoder_complexity == 2:
 # Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
 num_classes = 1
 model.fc = nn.Linear(model.fc.in_features, num_classes,bias=True) #***this model isn't built properly***
+
+if foundation == True:
+    model = initialize_radimagenet_resnet('RadImageNet_ResNet50.pt', 1)
+
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
 model = model.to(device)
 
@@ -100,6 +112,7 @@ run = wandb.init(project='bioengr-209-project',
                  },
                  name='test_run'
                  )
+
 # Timer
 start_time = time.time()
 
