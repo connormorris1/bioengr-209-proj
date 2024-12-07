@@ -29,7 +29,7 @@ save_model_path = 'resnet_weights_longrun2.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
 
-foundation = True # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
+foundation = False # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
 freeze_encoder_foundation = True # Set this to True if you want to freeze the encoder of the foundation model
 
 train_contrastive_encoder = False # Set this to true if you want to train the contrastive encoder (will save to save_model_path above)
@@ -138,10 +138,14 @@ run = wandb.init(project='bioengr-209-project',
 start_time = time.time()
 
 # Training loop
+num_batches = len(train_dataloader) # Get total number of batches so we can split the training loop
 for i in range(0, num_epochs):
     epoch_start_time = time.time()
 
-    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer)
+    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer, start_batch=0, end_batch=num_batches // 2)
+    test_loop(test_dataloader, model, criterion, device)
+
+    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer, start_batch=num_batches // 2, end_batch=num_batches)
     test_loop(test_dataloader, model, criterion, device)
 
     elapsed_time = time.time() - epoch_start_time

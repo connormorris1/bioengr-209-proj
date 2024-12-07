@@ -7,12 +7,42 @@ import wandb
 # This code is adopted straight from the Pytorch tutorial with slight modifications
 # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
 
+'''
 def train_loop(dataloader, model, loss_fn, device, batch_size, optimizer):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
     for batch, (X, y) in enumerate(dataloader):
+
+        # Move X and y to GPU
+        X = X.to(device)
+        y = y.to(device)
+
+        # Compute prediction and loss
+        pred = model(X)
+        loss = loss_fn(pred, y)
+
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        if batch % 10 == 0:
+            loss, current = loss.item(), batch * batch_size + len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            wandb.log({'train_loss':loss})
+'''
+
+def train_loop(dataloader, model, loss_fn, device, batch_size, optimizer, start_batch, end_batch):
+    size = 0
+    # Set the model to training mode - important for batch normalization and dropout layers
+    # Unnecessary in this situation but added for best practices
+    model.train()
+    for batch in range(start_batch, end_batch):
+
+        (X, y) = next(iter(dataloader))
+        size += len(y)
 
         # Move X and y to GPU
         X = X.to(device)
