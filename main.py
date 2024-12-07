@@ -16,8 +16,10 @@ from ContrastiveLearning import SupervisedContrastiveLoss
 
 # Path to directory containing dicom files
 # Expected format of these files: csv files where each line is path_to_dicom, label
-labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
-labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
+#labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
+#labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
+labels_train = 'data_paths/all_train.csv'
+labels_test = 'data_paths/all_test.txt'
 #labels_train = 'train_2ch.txt'
 #labels_test = 'test_2ch.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
@@ -25,13 +27,13 @@ interp_resolution = 224 # Resnets expect a 224x224 image
 batch_num = 100 # Batch size
 learning_rate = 0.001
 num_epochs = 25
-save_model_path = 'resnet_weights_longrun2.pth'
+save_model_path = 'radimgnet_1.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
 
 dropout = False # Note: The foundation model always has dropout
 
-foundation = False # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
+foundation = True # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
 freeze_encoder_foundation = False # Set this to True if you want to freeze the encoder of the foundation model
 
 train_contrastive_encoder = False # Set this to true if you want to train the contrastive encoder (will save to save_model_path above)
@@ -120,7 +122,7 @@ if train_contrastive_encoder:
 
 if foundation == True and train_contrastive_encoder == False:
     model = initialize_radimagenet_resnet('RadImageNet_ResNet50.pt', 1, freeze_encoder_foundation)
-print(model)
+
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
 model = model.to(device)
 
@@ -140,7 +142,7 @@ run = wandb.init(project='bioengr-209-project',
                      "input_dim": interp_resolution,
                      "model_complexity": encoder_complexity
                  },
-                 name='test_run_complex1_2'
+                 name='test_foundation_complex1_2'
                  )
 
 # Timer
