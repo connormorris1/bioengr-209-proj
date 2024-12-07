@@ -34,6 +34,7 @@ def initialize_radimagenet_resnet(file_path, num_classes, freeze_encoder):
     model = nn.Sequential(backbone, classifier)
     backbone.load_state_dict(torch.load(file_path))
 
+    # Freeze all parameters in encoder if tag is selected
     if freeze_encoder:
         for parameter in backbone.parameters():
             parameter.requires_grad = False

@@ -10,20 +10,21 @@ import pandas as pd
 import time
 import wandb
 from FoundationModel import initialize_radimagenet_resnet
+from ContrastiveLearning import SupervisedContrastiveLoss
 
 ############################################################################
 
 # Path to directory containing dicom files
 # Expected format of these files: csv files where each line is path_to_dicom, label
-#labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
-#labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
-labels_train = 'train.txt'
-labels_test = 'test.txt'
+labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
+labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
+#labels_train = 'train.txt'
+#labels_test = 'test.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size
 learning_rate = 0.001
-num_epochs = 50 
+num_epochs = 50
 save_model_path = 'resnet_weights_longrun2.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
@@ -31,11 +32,15 @@ pretrained = False # Set this to True if you want to use the pretrained version
 foundation = True # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
 freeze_encoder_foundation = True # Set this to True if you want to freeze the encoder of the foundation model
 
+train_contrastive_encoder = False # Set this to true if you want to train the contrastive encoder (will save to save_model_path above)
+use_contrastive_encoder = False # Set this to true if you want to use contrastive encoder in a classifier
+contrastive_encoder_path = '' # Path of encoder for contrastive learning model, note encoder complexity tag below must match structure of model
+
 # There are three different encoder models: Resnet18, Resnet34, and Resnet50
 # Set this to 0 for Resnet18, 1 for Resnet34, and 2 for Resnet50
 # The higher the complexity, the longer the training time but the better the performance on complex tasks
 # Suggestion: Use Resnet18 to prototype and Resnet 34 or 50 for final model
-encoder_complexity = 1
+encoder_complexity = 0
 
 ############################################################################
 
@@ -87,11 +92,24 @@ if encoder_complexity == 1:
 if encoder_complexity == 2:
     model = models.resnet50(pretrained=pretrained)
 
+# If we are using the contrastive learning encoder then freeze the encoder
+if use_contrastive_encoder:
+    model.load_state_dict(torch.load(contrastive_encoder_path), strict=False)
+    for parameter in model.parameters():
+        parameter.requires_grad = False
+
 # Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
 num_classes = 1
 model.fc = nn.Linear(model.fc.in_features, num_classes,bias=True) #***this model isn't built properly***
+if train_contrastive_encoder:
+    # Remove the final layer so we just get the encoder in order to perform contrastive learning
+    # Then once encoder is trained we will freeze the weights and add a classifier layer
+    # Basically this step uses the contrastive loss to adjust the weights of the encoder such that it maximizes the distance b/w the two groups, after which if we train/add a classifier we get much easier classification due to better separation
+    # See details under Experiment 2 in https://keras.io/examples/vision/supervised-contrastive-learning/
+    # Note this line specifically to remove the fc layer is from ChatGPT
+    model = torch.nn.Sequential(*(list(model.children())[:-1]))
 
-if foundation == True:
+if foundation == True and train_contrastive_encoder == False:
     model = initialize_radimagenet_resnet('RadImageNet_ResNet50.pt', 1, freeze_encoder_foundation)
 
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
@@ -99,6 +117,8 @@ model = model.to(device)
 
 # Loss and optimizer
 criterion = nn.BCEWithLogitsLoss()
+if train_contrastive_encoder:
+    criterion = SupervisedContrastiveLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 wandb.login(key="3ecaafdc4daf42051628a9bdebf0debb6eb8a1c5")
@@ -121,7 +141,7 @@ start_time = time.time()
 for i in range(0, num_epochs):
     epoch_start_time = time.time()
 
-    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer) 
+    train_loop(train_dataloader, model, criterion, device, batch_num, optimizer)
     test_loop(test_dataloader, model, criterion, device)
 
     elapsed_time = time.time() - epoch_start_time
