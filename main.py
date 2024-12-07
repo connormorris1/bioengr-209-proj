@@ -18,29 +18,31 @@ from ContrastiveLearning import SupervisedContrastiveLoss
 # Expected format of these files: csv files where each line is path_to_dicom, label
 labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
 labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
-#labels_train = 'train.txt'
-#labels_test = 'test.txt'
+#labels_train = 'train_2ch.txt'
+#labels_test = 'test_2ch.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size
 learning_rate = 0.001
-num_epochs = 50
+num_epochs = 25
 save_model_path = 'resnet_weights_longrun2.pth'
 
 pretrained = False # Set this to True if you want to use the pretrained version
 
+dropout = False # Note: The foundation model always has dropout
+
 foundation = False # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
-freeze_encoder_foundation = True # Set this to True if you want to freeze the encoder of the foundation model
+freeze_encoder_foundation = False # Set this to True if you want to freeze the encoder of the foundation model
 
 train_contrastive_encoder = False # Set this to true if you want to train the contrastive encoder (will save to save_model_path above)
 use_contrastive_encoder = False # Set this to true if you want to use contrastive encoder in a classifier
-contrastive_encoder_path = '' # Path of encoder for contrastive learning model, note encoder complexity tag below must match structure of model
+contrastive_encoder_path = 'contrastive_encoder.pth' # Path of encoder for contrastive learning model, note encoder complexity tag below must match structure of model
 
 # There are three different encoder models: Resnet18, Resnet34, and Resnet50
 # Set this to 0 for Resnet18, 1 for Resnet34, and 2 for Resnet50
 # The higher the complexity, the longer the training time but the better the performance on complex tasks
 # Suggestion: Use Resnet18 to prototype and Resnet 34 or 50 for final model
-encoder_complexity = 0
+encoder_complexity = 1
 
 ############################################################################
 
@@ -100,7 +102,14 @@ if use_contrastive_encoder:
 
 # Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
 num_classes = 1
-model.fc = nn.Linear(model.fc.in_features, num_classes,bias=True) #***this model isn't built properly***
+model.fc = nn.Linear(model.fc.in_features, num_classes, bias=True) #***this model isn't built properly***
+# This dropout code from https://discuss.pytorch.org/t/resnet-last-layer-modification/33530
+if dropout:
+    model.fc = nn.Sequential(
+        nn.Dropout(0.5),
+        nn.Linear(model.fc.in_features, num_classes)
+    )
+
 if train_contrastive_encoder:
     # Remove the final layer so we just get the encoder in order to perform contrastive learning
     # Then once encoder is trained we will freeze the weights and add a classifier layer
@@ -111,7 +120,7 @@ if train_contrastive_encoder:
 
 if foundation == True and train_contrastive_encoder == False:
     model = initialize_radimagenet_resnet('RadImageNet_ResNet50.pt', 1, freeze_encoder_foundation)
-
+print(model)
 # Move resnet to the device we stated earlier (GPU, mps, or CPU)
 model = model.to(device)
 
