@@ -1,7 +1,6 @@
 import pydicom
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import pandas as pd
@@ -42,8 +41,7 @@ class CustomImageDataset(Dataset):
         dicoms = [pydicom.dcmread(img_path + file) for file in os.listdir(img_path) if os.path.isfile(img_path + file)]
 
         # skip files with no SliceLocation (eg scout views)
-        # NOTE: THIS CODE IS TAKEN FROM THE PYDICOM TUTORIAL
-        # TODO Replace by sorting by PatientPosition if this doesn't work for some of our data
+        # NOTE: This code is taken from the PyDicom tutorial (ultimately not used)
         slices = []
         skipcount = 0
         for f in dicoms:
@@ -57,7 +55,7 @@ class CustomImageDataset(Dataset):
         # ensure they are in the correct order
         slices = sorted(slices, key=lambda s: s.SliceLocation)
 
-        # STOLEN CODE ENDS HERE
+        # Code from PyDicom ends here
 
         # Now staple these into a 3D image (assuming slices are all equal dimension)
         z_dim = len(slices)

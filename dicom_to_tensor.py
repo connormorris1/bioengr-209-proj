@@ -46,12 +46,9 @@ def dicom_path_to_tensor(img_path, interp_resolution):
     dicom_tensor = dicom_tensor.unsqueeze(0)
 
     # Turn from a 1 color channel image into 3 channel
-    # TODO Make this better since model expects 3 color channel so I'm just copying the intensity into two other channels
-    # ***Medical images are grayscale. Maybe an architecture w/out extra color channels is better?***
     dicom_tensor_resized = np.repeat(dicom_tensor, 3, axis=0)
 
     # Model expects a float instead of int
-    # ***may need to normalize pixel values to mean of 0, std of 1***
     dicom_tensor_resized = dicom_tensor_resized.to(torch.float32)
     shape = dicom_tensor_resized.shape
     if shape[0] != 3 or shape[1] != 224 or shape[2] != 224:
@@ -59,17 +56,3 @@ def dicom_path_to_tensor(img_path, interp_resolution):
         print(img_path)
 
     return dicom_tensor_resized
-
-# Test code:
-'''
-import matplotlib.pyplot as plt
-img_path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train/10/study/sax_5/IM-13299-0001.dcm'
-img_path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train/10/study/sax_5/IM-13299-0015.dcm'
-img_path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train/10/study/sax_11/IM-13305-0001.dcm'
-img_path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train/10/study/sax_11/IM-13305-0015.dcm'
-#img_path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train/10/study/sax_8/IM-13302-0001.dcm'
-#img_path = '/Users/omar/Downloads/second-annual-data-science-bowl/train/train/10/study/sax_6/IM-13300-0001.dcm'
-tens = dicom_path_to_tensor(img_path, 128)
-plt.imshow(tens[2, :, :],cmap='gray')
-plt.show()
-'''

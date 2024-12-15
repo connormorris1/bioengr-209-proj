@@ -16,12 +16,8 @@ from ContrastiveLearning import SupervisedContrastiveLoss
 
 # Path to directory containing dicom files
 # Expected format of these files: csv files where each line is path_to_dicom, label
-#labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
-#labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
 labels_train = 'data_paths/all_train.csv'
 labels_test = 'data_paths/all_test.txt'
-#labels_train = 'train_2ch.txt'
-#labels_test = 'test_2ch.txt'
 interp_resolution = 224 # Resnets expect a 224x224 image
 
 batch_num = 100 # Batch size
@@ -53,27 +49,9 @@ encoder_complexity = 1
 # Balance training data (so positive and negative labels equal) but don't do so for test data
 #try using WeightedRandomSampler to simplify balancing dataset
 labels = list(pd.read_csv(labels_train,header=None)[1])
-'''
-class_counts = np.bincount(labels)
-weights = 1/class_counts
-sample_weights = weights[labels]
-sampler = WeightedRandomSampler(weights=sample_weights,num_samples=int(class_counts[1]*2),replacement=False) #weighted random sampler that chooses a random sample of 2x the # of positive examples each epoch w/out replacement
-#train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, False), batch_size=batch_num,sampler=sampler)
-'''
+
 train_dataloader = DataLoader(CustomImageDataset(labels_train, interp_resolution, True), batch_size=batch_num)
 test_dataloader = DataLoader(CustomImageDataset(labels_test, interp_resolution, False), batch_size=batch_num)
-
-# This tests the MRI Data Loader
-'''
-train_features, train_labels = next(iter(train_dataloader))
-print(f"Feature batch shape: {train_features.size()}")
-print(f"Labels batch shape: {train_labels.size()}")
-img = train_features[0].squeeze()
-label = train_labels[0]
-plt.imshow(img, cmap="gray")
-plt.show()
-print(f"Label: {label}")
-'''
 
 # Uses GPU or Mac backend if available, otherwise use CPU
 # This code obtained from official pytorch docs
@@ -104,7 +82,7 @@ if use_contrastive_encoder:
 
 # Modify the final fully connected layer for 2 classes (single ventricle or not) ***only need 1 prediction - 0 is not, 1 is single ventricle***
 num_classes = 1
-model.fc = nn.Linear(model.fc.in_features, num_classes, bias=True) #***this model isn't built properly***
+model.fc = nn.Linear(model.fc.in_features, num_classes, bias=True)
 # This dropout code from https://discuss.pytorch.org/t/resnet-last-layer-modification/33530
 if dropout:
     model.fc = nn.Sequential(
