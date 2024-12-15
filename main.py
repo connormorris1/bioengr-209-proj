@@ -10,39 +10,63 @@ import pandas as pd
 import time
 import wandb
 from FoundationModel import initialize_radimagenet_resnet
-from ContrastiveLearning import SupervisedContrastiveLoss
+import argparse
+# from ContrastiveLearning import SupervisedContrastiveLoss
 
 ############################################################################
+parser = argparse.ArgumentParser(description='Begin training runs')
+parser.add_argument('--labels_train',type=str, default='data_paths/all_train.csv',help='path to training labels')
+parser.add_argument('--labels_test', type=str,default='data_paths/all_test.csv',help='path to testing labels')
+parser.add_argument('--resolution', type=int,default=224,help='resolution to resize images to')
+parser.add_argument('--batch_size', type=int,default=50,help='batch size')
+parser.add_argument('--epochs', type=int,default=3,help='number of epochs')
+parser.add_argument('--save_model_path', type=str,help='path to save model to, should end in .pth',required=True)
+parser.add_argument('--run_name', type=str,help='Run name in WandB',required=True)
+parser.add_argument('--pretrained', action='store_true',help='Use pretrained resnet model')
+parser.add_argument('--dropout', action='store_true',help='Use dropout resnet model linear layer')
+parser.add_argument('--encoder_complexity', type=int,choices=[0,1,2],default=0,help='Complexity level of the resnet model')
+parser.add_argument('--foundation', action='store_true',help='Use radimgnet foundation model (supersedes pretrained and dropout commands)')
+parser.add_argument('--foundation_freeze', action='store_true',help='Freezes weights of radimgnet foundation model encoder')
+parser.add_argument('--contrastive', action='store_true',help='Trains contrastive encoder')
+parser.add_argument('--contrastive_encoder', action='store_true',help='Uses pretrained contrastive encoder')
+parser.add_argument('--contrastive_encoder_path', type=str,default='contrastive_encoder.pth',help='Path to read or save contrastive encoder from/to')
+
+args = parser.parse_args()
 
 # Path to directory containing dicom files
 # Expected format of these files: csv files where each line is path_to_dicom, label
-labels_train = 'data_paths/all_train.csv'
-labels_test = 'data_paths/all_test.txt'
-interp_resolution = 224 # Resnets expect a 224x224 image
+#labels_train = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_train.csv'
+#labels_test = '/home/cjmorris/repos/bioengr-209-proj/data_paths/all_test.csv'
+labels_train = args.labels_train
+labels_test = args.labels_test
+interp_resolution = args.resolution # Resnets expect a 224x224 image
 
-batch_num = 100 # Batch size
+print(f'Run name: {args.run_name}')
+save_model_path = args.save_model_path
+print(f'Save model path: {save_model_path}')
+batch_num = args.batch_size # Batch size
+print(f'Batch size: {batch_num}')
 learning_rate = 0.001
-num_epochs = 25
-save_model_path = 'radimgnet_1.pth'
+num_epochs = args.epochs
+print(f'Epochs: {num_epochs}')
 
-pretrained = False # Set this to True if you want to use the pretrained version
+pretrained = args.pretrained # Set this to True if you want to use the pretrained version
+dropout = args.dropout # Note: The foundation model always has dropout
+foundation = args.foundation # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
+freeze_encoder_foundation = args.foundation_freeze # Set this to True if you want to freeze the encoder of the foundation model
 
-dropout = False # Note: The foundation model always has dropout
-
-foundation = True # Set this to True if you want to use the pretrained foundation model (RadImageNet Reset50)
-freeze_encoder_foundation = False # Set this to True if you want to freeze the encoder of the foundation model
-
-train_contrastive_encoder = False # Set this to true if you want to train the contrastive encoder (will save to save_model_path above)
-use_contrastive_encoder = False # Set this to true if you want to use contrastive encoder in a classifier
-contrastive_encoder_path = 'contrastive_encoder.pth' # Path of encoder for contrastive learning model, note encoder complexity tag below must match structure of model
+train_contrastive_encoder = args.contrastive # Set this to true if you want to train the contrastive encoder (will save to save_model_path above)
+use_contrastive_encoder = args.contrastive_encoder # Set this to true if you want to use contrastive encoder in a classifier
+contrastive_encoder_path =  args.contrastive_encoder_path # Path of encoder for contrastive learning model, note encoder complexity tag below must match structure of model
 
 # There are three different encoder models: Resnet18, Resnet34, and Resnet50
 # Set this to 0 for Resnet18, 1 for Resnet34, and 2 for Resnet50
 # The higher the complexity, the longer the training time but the better the performance on complex tasks
 # Suggestion: Use Resnet18 to prototype and Resnet 34 or 50 for final model
-encoder_complexity = 1
+encoder_complexity = args.encoder_complexity
 
 ############################################################################
+
 
 # Produces DataLoader from our data
 # This Custom Data Loader first handles conversion of .dicom to tensor objects

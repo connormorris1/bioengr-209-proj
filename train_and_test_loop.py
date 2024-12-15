@@ -8,14 +8,13 @@ import wandb
 # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
 
 def train_loop(dataloader, model, loss_fn, device, batch_size, optimizer, start_batch, end_batch):
-    size = 0
+    size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
     # Unnecessary in this situation but added for best practices
     model.train()
     for batch in range(start_batch, end_batch):
 
         (X, y) = next(iter(dataloader))
-        size += len(y)
 
         # Move X and y to GPU
         X = X.to(device)
